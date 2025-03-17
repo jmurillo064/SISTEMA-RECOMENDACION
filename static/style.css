@@ -1,0 +1,12 @@
+.contenedor {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 300px;
+    border: 2px solid black;
+}
+
+.contenido {
+    background: lightblue;
+    padding: 20px;
+}

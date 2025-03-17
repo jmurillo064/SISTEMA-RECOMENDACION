@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AbstractKey</title>
+</head>
+
+<body class="fondo">
+    <div class="contenedor">
+        <div class="contenido">
+            <h1>Análisis de Abstracts: Palabras claves al instante</h1>
+            <div class="contenedor-buscar">
+                <form action="/procesar" method="POST" id="formulario">
+                    <div class="buscador">
+                        <textarea class="area" name="abstract" placeholder="Ingrese aquí su abstract..."
+                            id="abstract">{% if abstract %}{{ abstract }}{% endif %}</textarea>
+                        <div>
+                            <button type="button" class="boton" onclick="borrarInformacion()"><strong>Borrar información
+                                    🗑️</strong></button>
+                            <button type="submit" class="boton"><strong>Generar recomendación 💡</strong></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div>
+
+        {% if mostrar %}
+        <div id="cards-container" class="card-contenedor">
+            {% if datos %}
+            {% for termino, data in datos.items() %}
+            <div class="card">
+                <h3>Término clave: {{ termino }}</h3>
+                {% for categoria in data.similarities %}
+                <p><strong>{{ categoria.category }}:</strong> {{ categoria.similarity }}</p>
+                {% endfor %}
+                <p><strong>Mejor categoría asignada:</strong> {{ data.best_category }}</p>
+            </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .fondo {
+
+            background-color: #f0f0f0;
+        }
+
+        h1 {
+            padding: 20px;
+            color: #0056b3;
+        }
+
+        .contenedor {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 50vh;
+            width: 100vw;
+            background-color: #f0f0f0;
+        }
+
+        .contenido {
+            background: lightblue;
+            padding: 20px;
+            border-radius: 10px;
+            height: 90%;
+            width: 90%;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+            justify-content: center;
+            text-align: center;
+        }
+
+        .contenedor-buscar {
+            height: 50%;
+            width: 100%;
+        }
+
+        .buscador {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            height: 100%;
+            width: 100%;
+        }
+
+        .area {
+            width: 75%;
+            height: 200px;
+            resize: none;
+            border-radius: 8px;
+            padding: 10px;
+            border: 1px solid #ced4da;
+        }
+
+        .boton {
+            border-radius: 8px;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            background-color: #f0f0f0;
+            color: #0056b3;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin: 10px;
+        }
+
+        .boton:hover {
+            background-color: #0056b3;
+            color: #f0f0f0;
+        }
+
+        .card-contenedor {
+            display: flex;
+            flex-direction: row;
+            text-align: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .card {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 10px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+            width: 250px;
+            text-align: left;
+            flex-basis: calc(30% - 20px);
+        }
+
+        .card h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .card p {
+            margin: 5px 0;
+        }
+
+
+        /* Loading Spinner */
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 2s linear infinite;
+        }
+
+        .psp {
+            margin: 5px;
+            color: #f0f0f0;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .custom-alert {
+            display: none;
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #f44336;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .close-alert {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            cursor: pointer;
+        }
+
+        .close-alert:hover {
+            color: #ddd;
+        }
+    </style>
+    <!-- Loading Spinner Container -->
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p class="psp">Procesando...</p>
+    </div>
+
+    <div id="custom-alert" class="custom-alert">
+        <span id="alert-message"></span>
+        <button id="close-alert" class="close-alert">×</button>
+    </div>
+    <script>
+        function borrarInformacion() {
+            document.getElementById("abstract").value = "";
+            window.location.href = "/";
+        }
+        document.getElementById("formulario").addEventListener("submit", function (event) {
+            if (!validarFormulario()) {
+                event.preventDefault();  // Evita el envío si no es válido
+                return;  // No continuamos con el resto del código
+            }
+            // Mostrar el loading spinner
+            document.getElementById("loading").style.display = "flex";
+
+            // Deshabilitar el botón para evitar múltiples envíos
+            document.querySelector(".boton[type='submit']").disabled = true;
+        });
+
+        function validarFormulario() {
+            var abstract = document.getElementById("abstract").value.trim();  // Obtener el valor del textarea
+            if (abstract === "") {
+                // Mostrar la alerta personalizada
+                mostrarAlerta("Por favor, ingresa información antes de enviar el formulario.");
+                return false;  // Evitar el envío del formulario si está vacío
+            }
+            return true;  // Permitir el envío del formulario si hay contenido
+        }
+
+        function mostrarAlerta(mensaje) {
+            var alertDiv = document.getElementById("custom-alert");
+            var alertMessage = document.getElementById("alert-message");
+
+            alertMessage.textContent = mensaje;  // Establecer el mensaje de la alerta
+            alertDiv.style.display = "block";  // Mostrar la alerta
+
+            // Cerrar la alerta cuando se haga clic en el botón de cerrar
+            document.getElementById("close-alert").addEventListener("click", function () {
+                alertDiv.style.display = "none";
+            });
+
+            // Ocultar la alerta después de 5 segundos (opcional)
+            setTimeout(function () {
+                alertDiv.style.display = "none";
+            }, 5000);
+        }
+
+    </script>
+
+</body>
+
+</html>
